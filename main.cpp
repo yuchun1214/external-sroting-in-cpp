@@ -1,4 +1,3 @@
-#include <__string>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -38,7 +37,8 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
     
     int readValue1, readValue2; 
     int i = 0, j = 0;
-    vector<int>  numbers1,  numbers2;
+    // vector<int>  numbers1,  numbers2;
+    int *numbers1, *numbers2;
     int size1, size2;
     size1 = 0;
     size2 = 0;
@@ -56,11 +56,11 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 	while(true){
 		size1 = size2 = i = j =0;
 		gotTheValue2 = gotTheValue1 = false;
-		numbers1.reserve(chunkSize);
-		numbers2.reserve(chunkSize);
+		numbers1 = new int[chunkSize];
+		numbers2 = new int[chunkSize];
 
 		while(file1 >> readValue1){
-			numbers1.push_back(readValue1);
+			numbers1[i] = readValue1;
 			gotTheValue1 = true;
 			haventSort1 = true;
 			++i;
@@ -70,15 +70,14 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 				mt.size = i;
 				mt.current = 0;
 				mergeConsumer.numbers_vector1.push_back(mt);
-				numbers1.clear();
-				numbers1.reserve(chunkSize);
+				numbers1 = new int[chunkSize];
 				break;
 			}
 		}
 		size1 = i;
 
 		while(file2 >> readValue2){
-			numbers2.push_back(readValue2);
+			numbers2[j] = readValue2;
 			gotTheValue2 = true;
 			haventSort2 = true;
 			++j;
@@ -88,8 +87,7 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 				mt.size = j;
 				mt.current = 0;
 				mergeConsumer.numbers_vector2.push_back(mt);
-				numbers2.clear();
-				numbers2.reserve(chunkSize);
+				numbers2 = new int[chunkSize];
 				break;
 			}
 		}
@@ -98,14 +96,16 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 		if(haventSort1 && gotTheValue1){
 			mt.numbers = numbers1;
 			mt.size = size1;
-			numbers1.clear();
+            mt.current = 0;
+			numbers1 = new int[chunkSize];
 			mergeConsumer.numbers_vector1.push_back(mt);	
 		}
 
 		if(haventSort2 && gotTheValue2){
 			mt.numbers = numbers2;
 			mt.size = size2;
-			numbers2.clear();	
+            mt.current = 0;
+			numbers2 = new int[chunkSize];	
 			mergeConsumer.numbers_vector2.push_back(mt);
 		}
 

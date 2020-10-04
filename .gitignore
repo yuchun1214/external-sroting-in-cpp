@@ -1,3 +1,6 @@
 chunk*
 *.txt
 *.dSYM/
+*.o
+main
+gen
