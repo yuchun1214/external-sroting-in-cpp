@@ -23,7 +23,7 @@ void OutputStream::output(int *numbers,unsigned int size){
     	// cout<<numbers[i]<<endl;
 		outputFile<<numbers[i]<<endl;
 	}
-	// delete[] numbers;
+	delete[] numbers;
 }
 
 void OutputStream::start(vector<Task> & tasks, fstream & outputFile){

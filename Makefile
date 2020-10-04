@@ -15,7 +15,7 @@ task.o: task.cpp
 merge:
 	g++ -g -o merge merge.cpp
 
-gen:
+gen: number_generator.cpp
 	g++ -o gen number_generator.cpp
 
 verify:

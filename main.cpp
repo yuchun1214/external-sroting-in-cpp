@@ -205,11 +205,12 @@ int main(int argc, const char * argv[]){
 	// sub_merge("chunk1-0", "chunk1-1", 2, 0, 10);
 	// sub_merge("chunk1-2", "chunk1-3", 2, 1, 10);
 	// sub_merge("chunk4-2", "chunk4-3", 5, 1, 10);
-
+    time_t start, end;
+    start = time(nullptr);
     fstream file;
-    file.open("rand.txt", ios_base::in);
+    file.open("input.txt", ios_base::in);
     int readValue = 0;
-    int chunkSize = atoi(argv[1]);
+    int chunkSize = 10000000;
     int chunkNumber = 0;
     int * numbers = new int[chunkSize];
     int currentCount = 0;
@@ -218,8 +219,9 @@ int main(int argc, const char * argv[]){
     vector<thread> threads;
     
 
-    clock_t time1 = clock();
-    cout<<"start"<<endl;
+    // clock_t time1 = clock();
+    // cout<<"start"<<endl;
+
     while(file >> readValue){
         haventSort = true;
         numbers[currentCount++] = readValue;
@@ -243,13 +245,16 @@ int main(int argc, const char * argv[]){
         it->join();
     }
 
-    clock_t time2 =  clock();
-    cout<<"finish"<<endl;
+    // clock_t time2 =  clock();
+    // cout<<"finish"<<endl;
 
 
     // cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC )<<endl;
-    cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC * (double)threads.size() )<<endl;
+    // cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC * (double)threads.size() )<<endl;
     
     merge(chunkNumber, chunkSize);
+    end = time(nullptr);
+    double diff = difftime(end, start);
+    printf("Time = %f\n", diff);
 	return 0;
 }
