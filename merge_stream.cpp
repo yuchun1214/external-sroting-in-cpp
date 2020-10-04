@@ -36,6 +36,7 @@ void MergeConsumer::merge(bool & open, vector<MergeTask> & task1, vector<MergeTa
                         k = 0;
                     }
                 }
+                delete[] t2.numbers;
             }else if(t1.numbers != nullptr && t2.numbers == nullptr){
                 // numbers take alll of numbers from t1.numbers 
                 task1.erase(task1.begin());// pop one
@@ -51,6 +52,7 @@ void MergeConsumer::merge(bool & open, vector<MergeTask> & task1, vector<MergeTa
                         k = 0; 
                     } 
                 } 
+                delete[] t1.numbers;
             }else if(t1.numbers != nullptr && t2.numbers != nullptr){
                 // task1.erase(task1.begin()); // pop one
                 // task2.erase(task2.begin()); // pop one
