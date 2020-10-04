@@ -129,6 +129,8 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 			
     file1.close();
     file2.close(); 
+    remove(filename1.c_str());
+    remove(filename2.c_str());
 }
 
 void merge(int numberOfChunks, int chunkSize){
@@ -175,6 +177,7 @@ void merge(int numberOfChunks, int chunkSize){
                     outFile << value<<endl;
             }
             // rename(oldFileName , newFileName);
+            remove(oldFileName);
             numberOfChunks = chunkNumber + 1;
         }
         else numberOfChunks = chunkNumber;
