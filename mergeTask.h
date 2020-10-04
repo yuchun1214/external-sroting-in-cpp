@@ -5,7 +5,7 @@
 
 typedef struct{
 	int * numbers;
-	// std::vector<int> numbers;
+	//std::vector<int> numbers;
 	int current;
 	unsigned int size;
 } MergeTask;

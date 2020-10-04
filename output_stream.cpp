@@ -20,7 +20,7 @@ void OutputStream::test(vector<Task> &){
 
 void OutputStream::output(int *numbers,unsigned int size){
 	for	(unsigned int i = 0; i < size; ++i){
-		// cout<<numbers[i]<<endl;
+    	// cout<<numbers[i]<<endl;
 		outputFile<<numbers[i]<<endl;
 	}
 	// delete[] numbers;

@@ -37,7 +37,7 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
     
     int readValue1, readValue2; 
     int i = 0, j = 0;
-    // vector<int>  numbers1,  numbers2;
+    //vector<int>  numbers1,  numbers2;
     int *numbers1, *numbers2;
     int size1, size2;
     size1 = 0;
@@ -50,7 +50,7 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 	cout<<filename1<<" + "<<filename2<<" >> "<<"chunk" + to_string(round) + "-" + to_string(chunkNumber)<<endl;
 	MergeConsumer mergeConsumer;
 	MergeTask mt;
-	// thread t(mergeConsumer.merge, ref(threadOpen), ref(mergeConsumer.numbers_vector1), ref(mergeConsumer.numbers_vector2), chunkSize, ref(os));
+	thread t(mergeConsumer.merge, ref(threadOpen), ref(mergeConsumer.numbers_vector1), ref(mergeConsumer.numbers_vector2), chunkSize, ref(os));
 
 
 	while(true){
@@ -70,7 +70,8 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 				mt.size = i;
 				mt.current = 0;
 				mergeConsumer.numbers_vector1.push_back(mt);
-				numbers1 = new int[chunkSize];
+		    	numbers1 = new int[chunkSize];
+                // numbers1.clear();
 				break;
 			}
 		}
@@ -88,6 +89,7 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 				mt.current = 0;
 				mergeConsumer.numbers_vector2.push_back(mt);
 				numbers2 = new int[chunkSize];
+                // numbers2.clear();
 				break;
 			}
 		}
@@ -98,6 +100,7 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 			mt.size = size1;
             mt.current = 0;
 			numbers1 = new int[chunkSize];
+            //numbers1.clear();
 			mergeConsumer.numbers_vector1.push_back(mt);	
 		}
 
@@ -106,19 +109,23 @@ void sub_merge(string filename1, string filename2,int round, int chunkNumber, in
 			mt.size = size2;
             mt.current = 0;
 			numbers2 = new int[chunkSize];	
+            //numbers2.clear();
 			mergeConsumer.numbers_vector2.push_back(mt);
 		}
 
-		mergeConsumer.merge(threadOpen, mergeConsumer.numbers_vector1, mergeConsumer.numbers_vector2,chunkSize, os);
+		// mergeConsumer.merge(threadOpen, mergeConsumer.numbers_vector1, mergeConsumer.numbers_vector2,chunkSize, os);
 
 
 		if(!gotTheValue1 && !gotTheValue2)
 			break;
 	}
 
+    mt.numbers = nullptr;
+    mergeConsumer.numbers_vector1.push_back(mt);
+    mergeConsumer.numbers_vector2.push_back(mt);
 	// mergeConsumer.merge(threadOpen, mergeConsumer.numbers_vector1, mergeConsumer.numbers_vector2, chunkSize, os);
 	threadOpen = false;
-	//t.join();
+	t.join();
 			
     file1.close();
     file2.close(); 
@@ -187,59 +194,59 @@ void sort_and_write(int * numbers, int size, int chunkNumber){
 
 
 int main(int argc, const char * argv[]){
-	// sub_merge("chunk0-0", "chuk0-1", 1, 0, 10);
-	// sub_merge("chunk0-2", "chuk0-3", 1, 1, 10);
-	// sub_merge("chunk0-4", "chuk0-5", 1, 2, 10);
-	// sub_merge("chunk0-6", "chuk0-7", 1, 3, 10);
-	// sub_merge("chunk0-8", "chuk0-9", 1, 4, 10);
-	// sub_merge("chunk1-0", "chuk1-1", 2, 0, 10);
+	// sub_merge("chunk0-0", "chunk0-1", 1, 0, 10);
+	// sub_merge("chunk0-2", "chunk0-3", 1, 1, 10);
+	// sub_merge("chunk0-4", "chunk0-5", 1, 2, 10);
+	// sub_merge("chunk0-6", "chunk0-7", 1, 3, 10);
+	// sub_merge("chunk0-8", "chunk0-9", 1, 4, 10);
+	// sub_merge("chunk1-0", "chunk1-1", 2, 0, 10);
 	// sub_merge("chunk1-2", "chunk1-3", 2, 1, 10);
 	// sub_merge("chunk4-2", "chunk4-3", 5, 1, 10);
 
-     fstream file;
-     file.open("rand.txt", ios_base::in);
-     int readValue = 0;
-     int chunkSize = atoi(argv[1]);
-     int chunkNumber = 0;
-     int * numbers = new int[chunkSize];
-     int currentCount = 0;
-     bool haventSort = false;
+    fstream file;
+    file.open("rand.txt", ios_base::in);
+    int readValue = 0;
+    int chunkSize = atoi(argv[1]);
+    int chunkNumber = 0;
+    int * numbers = new int[chunkSize];
+    int currentCount = 0;
+    bool haventSort = false;
 
-     vector<thread> threads;
-     
+    vector<thread> threads;
+    
 
-     clock_t time1 = clock();
-     cout<<"start"<<endl;
-     while(file >> readValue){
-         haventSort = true;
-         numbers[currentCount++] = readValue;
-         if(currentCount == chunkSize){
-             threads.push_back(thread(sort_and_write,numbers, chunkSize, chunkNumber));
-             // sort_and_write(numbers, chunkSize, chunkNumber);  
-             haventSort = false;
-             currentCount = 0;
-             ++chunkNumber;
-             numbers = new int[chunkSize];
-         }
-     }
+    clock_t time1 = clock();
+    cout<<"start"<<endl;
+    while(file >> readValue){
+        haventSort = true;
+        numbers[currentCount++] = readValue;
+        if(currentCount == chunkSize){
+            threads.push_back(thread(sort_and_write,numbers, chunkSize, chunkNumber));
+            // sort_and_write(numbers, chunkSize, chunkNumber);  
+            haventSort = false;
+            currentCount = 0;
+            ++chunkNumber;
+            numbers = new int[chunkSize];
+        }
+    }
 
-     if(haventSort){
-         // sort_and_write(numbers, currentCount, chunkNumber);
-         threads.push_back(thread(sort_and_write, numbers, currentCount, chunkNumber));
-         chunkNumber++;
-     }
+    if(haventSort){
+        // sort_and_write(numbers, currentCount, chunkNumber);
+        threads.push_back(thread(sort_and_write, numbers, currentCount, chunkNumber));
+        chunkNumber++;
+    }
 
-     for(vector<thread>::iterator it = threads.begin(); it != threads.end(); it++){
-         it->join();
-     }
+    for(vector<thread>::iterator it = threads.begin(); it != threads.end(); it++){
+        it->join();
+    }
 
-     clock_t time2 =  clock();
-     cout<<"finish"<<endl;
+    clock_t time2 =  clock();
+    cout<<"finish"<<endl;
 
 
-     // cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC )<<endl;
-     cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC * (double)threads.size() )<<endl;
-     
-     merge(chunkNumber, chunkSize);
-	 return 0;
+    // cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC )<<endl;
+    cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC * (double)threads.size() )<<endl;
+    
+    merge(chunkNumber, chunkSize);
+	return 0;
 }
