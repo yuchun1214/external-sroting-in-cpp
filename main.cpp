@@ -17,6 +17,7 @@ using namespace std;
 
 struct chunkFile{
 	FILE * file;
+    char filename[20];
 	// vector<int> * readValues;
 	int * readValues;
 	unsigned int size;
@@ -42,6 +43,8 @@ void readValue(chunkFile & cf, unsigned int chunkSize){
 	if(!hasRead){
 		cf.size = i;
 		cf.end = true;
+        fclose(cf.file);
+        remove(cf.filename);
 	}else{
 		cf.size = i;
 	}
@@ -51,17 +54,18 @@ void readValue(chunkFile & cf, unsigned int chunkSize){
 
 void merge(int numberOfChunks,int chunkSize){
 	FILE * file = fopen("_output.txt", "w");
-	char filename[50];
-	// bool FILE_END[numberOfChunks];
-	vector<bool> FILE_END;
+	// char filename[50];
+	bool FILE_END[numberOfChunks];
+	// vector<bool> FILE_END;
 	chunkFile * files = (chunkFile *)malloc(sizeof(chunkFile) * numberOfChunks);
 	for(int i = 0; i < numberOfChunks; ++i){
-		sprintf(filename, "chunk%d", i);
-		files[i].file = fopen(filename, "r");
+		sprintf(files[i].filename, "chunk%d", i);
+		files[i].file = fopen(files[i].filename, "r");
 		files[i].readValues = new int[chunkSize];
 		files[i].end = false;
+        // files[i].chunkNumber = i;
 		readValue(files[i], chunkSize);
-		FILE_END.push_back(false);
+		FILE_END[i] = false;
 	}
 
 	
@@ -113,12 +117,13 @@ void merge(int numberOfChunks,int chunkSize){
 
 void sort_and_write(int * numbers, int size, int chunkNumber){
     sort(numbers, numbers + size);
-    fstream file;
-    file.open("chunk" + to_string(chunkNumber), ios_base::out);
+    FILE * file;
+    file = fopen(("chunk" + to_string(chunkNumber)).c_str(), "w");
     for(int i = 0; i < size; ++i){
-        file<<numbers[i]<<endl; 
+        fprintf(file, "%d\n", numbers[i]);
+        //file<<numbers[i]<<endl; 
     } 
-    file.close();
+    fclose(file);
     delete[] numbers;
 }
 
@@ -127,9 +132,9 @@ int main(int argc, const char * argv[]){
     time_t start, end;
     start = time(nullptr);
 	FILE * file;
-	file = fopen("rand.txt", "r");
+	file = fopen(argv[1], "r");
     int readValue = 0;
-    int chunkSize = atoi(argv[1]);
+    int chunkSize = 50000000;
     int chunkNumber = 0;
     int * numbers = new int[chunkSize];
     int currentCount = 0;
@@ -163,7 +168,7 @@ int main(int argc, const char * argv[]){
     }
 
     
-    merge(chunkNumber, chunkSize);
+    merge(chunkNumber, 1000000);
     end = time(nullptr);
     double diff = difftime(end, start);
     printf("Time = %f\n", diff);

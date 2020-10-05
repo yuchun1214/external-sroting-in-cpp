@@ -1,6 +1,6 @@
 main:main.cpp output_stream.o task.o merge_stream.o
 	g++ -g -pthread --std=c++14 -c main.cpp
-	g++ -pthread --std=c++14 -g -o main main.o output_stream.o task.o merge_stream.o
+	g++ -pthread --std=c++14 -g -O3 -o main main.o output_stream.o task.o merge_stream.o
 
 merge_stream.o: merge_stream.cpp
 	g++ -g -pthread --std=c++14 -c merge_stream.cpp
