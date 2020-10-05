@@ -17,7 +17,8 @@ using namespace std;
 
 struct chunkFile{
 	FILE * file;
-	vector<int> * readValues;
+	// vector<int> * readValues;
+	int * readValues;
 	unsigned int size;
 	bool end;
 	unsigned int current;
@@ -28,9 +29,9 @@ void readValue(chunkFile & cf, unsigned int chunkSize){
 	unsigned int i =0;
 	int readValue;
 	bool hasRead = false;
-	cf.readValues->clear();
+	// cf.readValues->clear();
 	while(EOF != fscanf(cf.file, "%d", &readValue)){
-		cf.readValues->push_back(readValue);
+		cf.readValues[i] = readValue;
 		++i;
 		hasRead = true;
 		if(i >= chunkSize){
@@ -57,7 +58,7 @@ void merge(int numberOfChunks,int chunkSize){
 	for(int i = 0; i < numberOfChunks; ++i){
 		sprintf(filename, "chunk%d", i);
 		files[i].file = fopen(filename, "r");
-		files[i].readValues = new vector<int>;
+		files[i].readValues = new int[chunkSize];
 		files[i].end = false;
 		readValue(files[i], chunkSize);
 		FILE_END.push_back(false);
@@ -74,7 +75,7 @@ void merge(int numberOfChunks,int chunkSize){
 		for(int i = 0; i < numberOfChunks; ++i){
 			if(!files[i].end){
 				exist = true;
-				min = files[i].readValues->at(files[i].current);
+				min = files[i].readValues[files[i].current];
 				break;
 			}
 		}
@@ -87,8 +88,8 @@ void merge(int numberOfChunks,int chunkSize){
 		// find the min value and the position of min_value
 		min_position = 0;
 		for(int i = 0; i < numberOfChunks; ++i){
-			if(!files[i].end && files[i].readValues->at( files[i].current ) <= min){
-				min = files[i].readValues->at(files[i].current);
+			if(!files[i].end && files[i].readValues[files[i].current ] <= min){
+				min = files[i].readValues[files[i].current];
 				min_position = i;
 			}
 		}
