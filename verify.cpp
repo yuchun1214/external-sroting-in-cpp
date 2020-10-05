@@ -5,13 +5,13 @@ using namespace std;
 
 
 int main(int argc, const char * argv[]){
-    fstream file;
-    file.open(argv[1], ios_base::in);
+    FILE * file;
+    file = fopen(argv[1], "w");
     int readValue;
     int lastValue;
-    file >> lastValue;
+    fscanf(file, "%d\n", &readValue);
     int currentLine = 1;
-    while(file>>readValue){
+    while(EOF != fscanf(file, "%d\n", &readValue)){
         if(readValue < lastValue){
             cerr<<"Error at Line"<< currentLine <<endl;
             exit(-1);
