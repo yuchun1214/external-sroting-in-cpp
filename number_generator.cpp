@@ -10,7 +10,7 @@ int main(int argc, const char * argv[]){
     mt19937 gen(rd());
     uniform_int_distribution<> dist(-2147483648,  2147483647);
     FILE * file;
-    file = fopen("input.txt", "w");
+    file = fopen("rand.txt", "w");
     double max = atof(argv[1]);
     for(unsigned int i = 0; i < max; ++i){
         fprintf(file, "%d\n", dist(gen));

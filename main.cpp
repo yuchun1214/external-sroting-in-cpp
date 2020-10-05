@@ -5,6 +5,7 @@
 #include <string>
 #include <cmath>
 #include <thread>
+#include <type_traits>
 #include <vector>
 #include <ctime>
 #include "mergeTask.h"
@@ -14,180 +15,105 @@
 
 using namespace std;
 
-void output(int * numbers, int round, int chunkNumber, int chunkSize){
-    fstream fileout;
-    fileout.open("chunk" + to_string(round) + "-" + to_string(chunkNumber), fstream::app); 
-    for(int i = 0; i < chunkSize; ++i){
-        fileout <<numbers[i]<<endl; 
-    } 
-    delete[] numbers;
-    fileout.close();
+struct chunkFile{
+	FILE * file;
+	vector<int> * readValues;
+	unsigned int size;
+	bool end;
+	unsigned int current;
+};
+
+void readValue(chunkFile & cf, unsigned int chunkSize){
+	cf.current = 0;
+	unsigned int i =0;
+	int readValue;
+	bool hasRead = false;
+	cf.readValues->clear();
+	while(EOF != fscanf(cf.file, "%d", &readValue)){
+		cf.readValues->push_back(readValue);
+		++i;
+		hasRead = true;
+		if(i >= chunkSize){
+			cf.size = i;
+			return;
+		}
+	} 
+	if(!hasRead){
+		cf.size = i;
+		cf.end = true;
+	}else{
+		cf.size = i;
+	}
 }
 
 
 
-void sub_merge(string filename1, string filename2,int round, int chunkNumber, int chunkSize){
-	// cout<<"sub_merge"<<endl;
-
-    fstream file1;
-    file1.open(filename1, ios_base::in);
-    
-    fstream file2;
-    file2.open(filename2, ios_base::in);
-    
-    int readValue1, readValue2; 
-    int i = 0, j = 0;
-    //vector<int>  numbers1,  numbers2;
-    int *numbers1, *numbers2;
-    int size1, size2;
-    size1 = 0;
-    size2 = 0;
-	bool gotTheValue1, gotTheValue2;
-	bool haventSort1, haventSort2;
-	bool threadOpen = true;
-
-	OutputStream os("chunk" + to_string(round) + "-" + to_string(chunkNumber));
-	cout<<filename1<<" + "<<filename2<<" >> "<<"chunk" + to_string(round) + "-" + to_string(chunkNumber)<<endl;
-	MergeConsumer mergeConsumer;
-	MergeTask mt;
-	thread t(mergeConsumer.merge, ref(threadOpen), ref(mergeConsumer.numbers_vector1), ref(mergeConsumer.numbers_vector2), chunkSize, ref(os));
-
-
-	while(true){
-		size1 = size2 = i = j =0;
-		gotTheValue2 = gotTheValue1 = false;
-		numbers1 = new int[chunkSize];
-		numbers2 = new int[chunkSize];
-
-		while(file1 >> readValue1){
-			numbers1[i] = readValue1;
-			gotTheValue1 = true;
-			haventSort1 = true;
-			++i;
-			if(i >= chunkSize){
-				haventSort1 = false;
-				mt.numbers = numbers1;
-				mt.size = i;
-				mt.current = 0;
-				mergeConsumer.numbers_vector1.push_back(mt);
-		    	numbers1 = new int[chunkSize];
-                // numbers1.clear();
-				break;
-			}
-		}
-		size1 = i;
-
-		while(file2 >> readValue2){
-			numbers2[j] = readValue2;
-			gotTheValue2 = true;
-			haventSort2 = true;
-			++j;
-			if(j >= chunkSize){
-				haventSort2 = false;
-				mt.numbers = numbers2;
-				mt.size = j;
-				mt.current = 0;
-				mergeConsumer.numbers_vector2.push_back(mt);
-				numbers2 = new int[chunkSize];
-                // numbers2.clear();
-				break;
-			}
-		}
-		size2 = j;
-
-		if(haventSort1 && gotTheValue1){
-			mt.numbers = numbers1;
-			mt.size = size1;
-            mt.current = 0;
-			numbers1 = new int[chunkSize];
-            //numbers1.clear();
-			mergeConsumer.numbers_vector1.push_back(mt);	
-		}
-
-		if(haventSort2 && gotTheValue2){
-			mt.numbers = numbers2;
-			mt.size = size2;
-            mt.current = 0;
-			numbers2 = new int[chunkSize];	
-            //numbers2.clear();
-			mergeConsumer.numbers_vector2.push_back(mt);
-		}
-
-		// mergeConsumer.merge(threadOpen, mergeConsumer.numbers_vector1, mergeConsumer.numbers_vector2,chunkSize, os);
-
-
-		if(!gotTheValue1 && !gotTheValue2)
-			break;
+void merge(int numberOfChunks,int chunkSize){
+	FILE * file = fopen("_output.txt", "w");
+	char filename[50];
+	// bool FILE_END[numberOfChunks];
+	vector<bool> FILE_END;
+	chunkFile * files = (chunkFile *)malloc(sizeof(chunkFile) * numberOfChunks);
+	for(int i = 0; i < numberOfChunks; ++i){
+		sprintf(filename, "chunk%d", i);
+		files[i].file = fopen(filename, "r");
+		files[i].readValues = new vector<int>;
+		files[i].end = false;
+		readValue(files[i], chunkSize);
+		FILE_END.push_back(false);
 	}
 
-    mt.numbers = nullptr;
-    mergeConsumer.numbers_vector1.push_back(mt);
-    mergeConsumer.numbers_vector2.push_back(mt);
-	// mergeConsumer.merge(threadOpen, mergeConsumer.numbers_vector1, mergeConsumer.numbers_vector2, chunkSize, os);
-	threadOpen = false;
-	t.join();
-			
-    file1.close();
-    file2.close(); 
-    remove(filename1.c_str());
-    remove(filename2.c_str());
-}
+	
+	bool CONTINUE_READ = true;
+	int min;
+	int min_position;
+	bool exist;
+	while(CONTINUE_READ){
+		// search first value;
+		exist = false;	
+		for(int i = 0; i < numberOfChunks; ++i){
+			if(!files[i].end){
+				exist = true;
+				min = files[i].readValues->at(files[i].current);
+				break;
+			}
+		}
 
-void merge(int numberOfChunks, int chunkSize){
-    int levels = ceil(log2(numberOfChunks));
-    int canParseChunks;
-    int i, j;
-    bool isOdd;
-    string fileHead;
-    int chunkNumber = 0;
-    char newFileName[100];
-    char oldFileName[100];
-    cout<<"levels = "<<levels<<endl;
-    for(i = 0; i < levels; ++i){
-        fileHead = "chunk" + to_string(i) + "-";
-        // test number of chunks is odd or even
-        if(numberOfChunks % 2 == 1){
-           canParseChunks = numberOfChunks - 1; 
-           isOdd = true;
-        }else{
-            isOdd = false;
-            canParseChunks = numberOfChunks;
-        }
+		if(!exist){
+			break;
+		}
 
 
+		// find the min value and the position of min_value
+		min_position = 0;
+		for(int i = 0; i < numberOfChunks; ++i){
+			if(!files[i].end && files[i].readValues->at( files[i].current ) <= min){
+				min = files[i].readValues->at(files[i].current);
+				min_position = i;
+			}
+		}
 
-        chunkNumber = 0; 
-        // merge even numbers of chuncks
-        for(j = 0; j + 1 < canParseChunks; j += 2){
-            sub_merge(fileHead + to_string(j),  fileHead + to_string(j + 1), i + 1, chunkNumber++, chunkSize); 
-        }
+		files[min_position].current ++;
+	
+		// cout<<min<<endl;
+		fprintf(file, "%d\n", min);
 
-        // pass the last chuncks
-        if(isOdd) {
-            fstream file;
-            fstream outFile;
+		// check if current >= size
+		// yes -> read next chunk
+		// no -> continue
+		if(files[min_position].current >= files[min_position].size){
+			readValue(files[min_position], chunkSize);
+		}
 
-            sprintf(oldFileName, "chunk%d-%d", i, numberOfChunks - 1);
-            sprintf(newFileName, "chunk%d-%d",  i+1, chunkNumber);
-            file.open(oldFileName, ios_base::in);
-            outFile.open(newFileName, ios_base::out);
-            int value;
-            if(file.good() && outFile.good()){
-                while(file >> value)
-                    outFile << value<<endl;
-            }
-            // rename(oldFileName , newFileName);
-            remove(oldFileName);
-            numberOfChunks = chunkNumber + 1;
-        }
-        else numberOfChunks = chunkNumber;
-    } 
+
+		
+	}
 }
 
 void sort_and_write(int * numbers, int size, int chunkNumber){
     sort(numbers, numbers + size);
     fstream file;
-    file.open("chunk" + to_string(0) + "-" + to_string(chunkNumber), ios_base::out);
+    file.open("chunk" + to_string(chunkNumber), ios_base::out);
     for(int i = 0; i < size; ++i){
         file<<numbers[i]<<endl; 
     } 
@@ -197,20 +123,12 @@ void sort_and_write(int * numbers, int size, int chunkNumber){
 
 
 int main(int argc, const char * argv[]){
-	// sub_merge("chunk0-0", "chunk0-1", 1, 0, 10);
-	// sub_merge("chunk0-2", "chunk0-3", 1, 1, 10);
-	// sub_merge("chunk0-4", "chunk0-5", 1, 2, 10);
-	// sub_merge("chunk0-6", "chunk0-7", 1, 3, 10);
-	// sub_merge("chunk0-8", "chunk0-9", 1, 4, 10);
-	// sub_merge("chunk1-0", "chunk1-1", 2, 0, 10);
-	// sub_merge("chunk1-2", "chunk1-3", 2, 1, 10);
-	// sub_merge("chunk4-2", "chunk4-3", 5, 1, 10);
     time_t start, end;
     start = time(nullptr);
-    fstream file;
-    file.open("input.txt", ios_base::in);
+	FILE * file;
+	file = fopen("rand.txt", "r");
     int readValue = 0;
-    int chunkSize = 10000000;
+    int chunkSize = atoi(argv[1]);
     int chunkNumber = 0;
     int * numbers = new int[chunkSize];
     int currentCount = 0;
@@ -222,12 +140,11 @@ int main(int argc, const char * argv[]){
     // clock_t time1 = clock();
     // cout<<"start"<<endl;
 
-    while(file >> readValue){
+    while(EOF != fscanf(file, "%d\n", &readValue)){
         haventSort = true;
         numbers[currentCount++] = readValue;
         if(currentCount == chunkSize){
             threads.push_back(thread(sort_and_write,numbers, chunkSize, chunkNumber));
-            // sort_and_write(numbers, chunkSize, chunkNumber);  
             haventSort = false;
             currentCount = 0;
             ++chunkNumber;
@@ -236,7 +153,6 @@ int main(int argc, const char * argv[]){
     }
 
     if(haventSort){
-        // sort_and_write(numbers, currentCount, chunkNumber);
         threads.push_back(thread(sort_and_write, numbers, currentCount, chunkNumber));
         chunkNumber++;
     }
@@ -245,12 +161,6 @@ int main(int argc, const char * argv[]){
         it->join();
     }
 
-    // clock_t time2 =  clock();
-    // cout<<"finish"<<endl;
-
-
-    // cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC )<<endl;
-    // cout<<"Used Seconds = "<<(double)(time2 - time1) / ( (double)CLOCKS_PER_SEC * (double)threads.size() )<<endl;
     
     merge(chunkNumber, chunkSize);
     end = time(nullptr);

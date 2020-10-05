@@ -1,7 +1,7 @@
 
 if __name__ == '__main__':
     numbers = []
-    with open('input.txt', 'r') as f:
+    with open('rand.txt', 'r') as f:
         data = f.readlines()
 
         numbers = [int(i) for i in data]
