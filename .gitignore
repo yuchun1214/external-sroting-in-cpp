@@ -4,3 +4,4 @@ chunk*
 *.o
 main
 gen
+.DS_Store
