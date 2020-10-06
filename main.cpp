@@ -53,7 +53,7 @@ void readValue(chunkFile & cf, unsigned int chunkSize){
 
 
 void merge(int numberOfChunks,int chunkSize){
-	FILE * file = fopen("_output.txt", "w");
+	FILE * file = fopen("output.txt", "w");
 	// char filename[50];
 	bool FILE_END[numberOfChunks];
 	// vector<bool> FILE_END;
